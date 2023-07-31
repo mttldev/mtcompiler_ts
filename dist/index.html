@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Compiler</title>
+        <script src="index.js"></script>
+    </head>
+    <body>
+        <h1>Compiler</h1>
+        <textarea id="compiler_area" rows="30" style="width: 90%; height: 40%;"></textarea><br>
+        <textarea id="result_area" rows="30" readonly style="width: 90%; height: 40%;"></textarea><br>
+        <button onclick="compile()">Compile</button>
+        <script>
+            function compile() {
+                const area = document.getElementById("compiler_area");
+                const text = area.value;
+                const compiler = new Compiler(text);
+                const result = compiler.compile();
+                const result_area = document.getElementById("result_area");
+                result_area.value = result;
+            }
+        </script>
+    </body>
+</html>

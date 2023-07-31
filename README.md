@@ -5,7 +5,7 @@
 `MTScript`をコンパイルする`MTCompiler`の`TypeScript`版です。
 
 ## ビルド方法
-`npm install`で依存パッケージをインストールし、`npm run tsc`でビルドします。
+`npm install`で依存パッケージをインストールし、`npm run build`でビルドします。
 
 ## 使い方
 ﾁｮｯﾄﾜｶﾝﾅｲﾖｰ...

@@ -1,6 +1,10 @@
 'use strict';
 
-const fs = require("fs");
+// ブラウザで実行した場合はfsにnullを代入し、Node.jsの場合はfsをrequireする
+let fs: any = null;
+if (typeof window === "undefined") {
+    fs = require("fs");
+}
 
 enum Indents {
     None = 0,
@@ -49,7 +53,7 @@ class Compiler {
             indent = Indents.None;
         }
         if (line === "") indent = Indents.None; /* 引数なしで関数が実行された場合はlinecountだけ増やす */
-        this.input_text += this.indent_space.repeat(indent) + line + '\n';
+        this.output_text += this.indent_space.repeat(indent) + line + '\n';
         this.linecount += 1;
     }
 
@@ -82,7 +86,7 @@ class Compiler {
                 if (line.startsWith(";;")) {
                     // ラベル定義
                     const renlabel = line.slice(2);
-                    this.add_line(`label ${renlabel}:`);
+                    this.add_line(`label ${renlabel}:`, Indents.None);
                 } else if (line.includes("「")) {
                     // 会話表現など
                     if (!line.includes("」")) {
@@ -133,6 +137,9 @@ class Compiler {
                         this.currentmode = Modes.InnerPython;
                         this.add_line("python:", Indents.Default);
                     } else if (command == "include") {
+                        if (fs === null) {
+                            throw new Error(`[ERR:Expansion:Include] Line ${this.linecount}: ブラウザで実行した場合は、include命令は使用できません。`)
+                        }
                         // $include [path]
                         // ファイルをfsでインクルードする
                         if (args.length !== 1) {
