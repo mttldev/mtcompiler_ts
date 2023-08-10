@@ -25,6 +25,8 @@ class Compiler {
     splited_input: string[];
     output_text: string;
 
+    extended_indents: number = 0;
+
     linecount: number = 1;
 
     indent_space: string = "    ";
@@ -53,12 +55,13 @@ class Compiler {
             indent = Indents.None;
         }
         if (line === "") indent = Indents.None; /* 引数なしで関数が実行された場合はlinecountだけ増やす */
-        this.output_text += this.indent_space.repeat(indent) + line + '\n';
+        this.output_text += this.indent_space.repeat(indent + this.extended_indents) + line + '\n';
         this.linecount += 1;
+        this.extended_indents = 0;
     }
 
     compile(): string {
-        for (const line of this.splited_input) {
+        for (let line of this.splited_input) {
             if (this.currentmode === Modes.Python) {
                 if (line === "$endpy") {
                     this.currentmode = Modes.Default;
@@ -83,6 +86,12 @@ class Compiler {
             } else if (line === "") {
                 this.add_line();
             } else {
+                if (line.startsWith("%in%")) {
+                    while (line.startsWith("%in%")) {
+                        this.extended_indents += 1;
+                        line = line.slice(4);
+                    }
+                }
                 if (line.startsWith(";;")) {
                     // ラベル定義
                     const renlabel = line.slice(2);
