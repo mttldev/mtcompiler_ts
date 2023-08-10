@@ -113,7 +113,7 @@ class Compiler {
                         if (character in this.characters) {
                             this.add_line(`${this.characters[character]} "「${message}」"`);
                         } else {
-                            this.add_line(`"${character}「${message}」"`);
+                            this.add_line(`"${character}" "「${message}」"`);
                         }
                     }
                 } else if (line.startsWith(";")) {
