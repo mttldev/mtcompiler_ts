@@ -20,11 +20,11 @@ enum Modes {
     InnerPython = "innerpython",
 }
 
-Decorations = {
-    Bold = ["{b}", "{/b}"],
-    Italic = ["{i}", "{/i}"],
-    Strike = ["{s}", "{/s}"],
-    Underline = ["{u}", "{/u}"]
+const Decorations = {
+    Bold: ["{b}", "{/b}"],
+    Italic: ["{i}", "{/i}"],
+    Strike: ["{s}", "{/s}"],
+    Underline: ["{u}", "{/u}"]
 }
 
 class Compiler {
