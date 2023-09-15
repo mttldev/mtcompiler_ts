@@ -121,6 +121,9 @@ class Compiler {
                     // ラベル定義
                     const renlabel = line.slice(2);
                     this.add_line(`label ${renlabel}:`, Indents.None);
+                } else if (line.startsWith("#")) {
+                    // コメント
+                    this.add_line(line);
                 } else if (line.includes("「")) {
                     // 会話表現など
                     if (!line.includes("」")) {
@@ -149,9 +152,6 @@ class Compiler {
                     const [alias, character] = line.slice(1).split(":");
                     this.characters[alias] = character;
                     this.add_line();
-                } else if (line.startsWith("#")) {
-                    // コメント
-                    this.add_line(line);
                 } else if (line.startsWith(":")) {
                     // そのまま
                     this.add_line(line.slice(1), Indents.None);
