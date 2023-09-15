@@ -20,7 +20,7 @@ enum Modes {
     InnerPython = "innerpython",
 }
 
-enum Decorations {
+Decorations = {
     Bold = ["{b}", "{/b}"],
     Italic = ["{i}", "{/i}"],
     Strike = ["{s}", "{/s}"],
@@ -41,7 +41,7 @@ class Compiler {
     characters: {[alias: string]: string} = {};
 
     currentmode: Modes = Modes.Default;
-    currentdeco: Decorations[] = [];
+    currentdeco: string[][] = [];
 
     defines: {[tskey: string]: string} = {};
 
