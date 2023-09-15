@@ -226,7 +226,7 @@ class Compiler {
                         if (args.length !== 1) {
                             throw new Error(`[ERR:Expansion:Ifdef] Line ${this.linecount}: ifdef命令には1つの引数が必要ですが、${args.length}個指定されました。`)
                         }
-                        if (!args[0] in this.defines) this.exprcheck++;
+                        if (!(args[0] in this.defines)) this.exprcheck++;
                         this.add_line();
                     } else if (command === "ifndef") {
                         if (args.length !== 1) {
