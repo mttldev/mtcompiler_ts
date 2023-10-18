@@ -16,9 +16,14 @@
                 const area = document.getElementById("compiler_area");
                 const text = area.value;
                 const compiler = new Compiler(text);
-                const result = compiler.compile();
-                const result_area = document.getElementById("result_area");
-                result_area.value = result;
+                try {
+                    const result = compiler.compile();
+                    const result_area = document.getElementById("result_area");
+                    result_area.value = result;
+                } catch (e) {
+                    const result = e.message;
+                    alert(result);
+                }
             }
         </script>
     </body>
