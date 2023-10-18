@@ -20,6 +20,13 @@ enum Modes {
     InnerPython = "innerpython",
 }
 
+const Decorations = {
+    Bold: ["{b}", "{/b}"],
+    Italic: ["{i}", "{/i}"],
+    Strike: ["{s}", "{/s}"],
+    Underline: ["{u}", "{/u}"]
+}
+
 class Compiler {
     input_text: string;
     splited_input: string[];
@@ -34,11 +41,26 @@ class Compiler {
     characters: {[alias: string]: string} = {};
 
     currentmode: Modes = Modes.Default;
+    currentdeco: string[][] = [];
+
+    defines: {[tskey: string]: string} = {};
+
+    exprcheck: number = 0;
 
     constructor(input_text: string) {
         this.input_text = input_text;
         this.splited_input = input_text.split('\n');
         this.output_text = "";
+    }
+
+    effect_text(text: string): string {
+        for (const deco of this.currentdeco) {
+            text = `${deco[0]}${text}${deco[1]}`
+        }
+        for (const tskey in this.defines) {
+            text = text.replace(tskey, this.defines[tskey]);
+        }
+        return text
     }
 
     add_line(line: string = "", indent: Indents | number = Indents.Default): void {
@@ -62,7 +84,10 @@ class Compiler {
 
     compile(): string {
         for (let line of this.splited_input) {
-            if (this.currentmode === Modes.Python) {
+            if (this.exprcheck > 0) {
+                if (line === "$endif") this.exprcheck--;
+                this.add_line();
+            } else if (this.currentmode === Modes.Python) {
                 if (line === "$endpy") {
                     this.currentmode = Modes.Default;
                     this.add_line();
@@ -96,6 +121,9 @@ class Compiler {
                     // ラベル定義
                     const renlabel = line.slice(2);
                     this.add_line(`label ${renlabel}:`, Indents.None);
+                } else if (line.startsWith("#")) {
+                    // コメント
+                    this.add_line(line);
                 } else if (line.includes("「")) {
                     // 会話表現など
                     if (!line.includes("」")) {
@@ -106,14 +134,14 @@ class Compiler {
                         if (!message.endsWith("。")) {
                             console.warn(`[WARN:Narrator] Line ${this.linecount}: 会話が句点で終わっていません。適切な表現か確認してください。`);
                         }
-                        this.add_line(`"${message}"`);
+                        this.add_line(`"${this.effect_text(message)}"`);
                     } else {
                         // 通常会話
                         const [character, message] = line.slice(0, -1).split("「");
                         if (character in this.characters) {
-                            this.add_line(`${this.characters[character]} "「${message}」"`);
+                            this.add_line(`${this.characters[character]} "「${this.effect_text(message)}」"`);
                         } else {
-                            this.add_line(`"${character}" "「${message}」"`);
+                            this.add_line(`"${character}" "「${this.effect_text(message)}」"`);
                         }
                     }
                 } else if (line.startsWith(";")) {
@@ -124,9 +152,6 @@ class Compiler {
                     const [alias, character] = line.slice(1).split(":");
                     this.characters[alias] = character;
                     this.add_line();
-                } else if (line.startsWith("#")) {
-                    // コメント
-                    this.add_line(line);
                 } else if (line.startsWith(":")) {
                     // そのまま
                     this.add_line(line.slice(1), Indents.None);
@@ -145,7 +170,7 @@ class Compiler {
                         // InnerPythonモード
                         this.currentmode = Modes.InnerPython;
                         this.add_line("python:", Indents.Default);
-                    } else if (command == "include") {
+                    } else if (command === "include") {
                         if (fs === null) {
                             throw new Error(`[ERR:Expansion:Include] Line ${this.linecount}: ブラウザで実行した場合は、include命令は使用できません。`)
                         }
@@ -161,6 +186,54 @@ class Compiler {
                         const includefile = fs.readFileSync(includepath, "utf-8");
                         const compiler = new Compiler(includefile);
                         this.add_line(compiler.compile(), Indents.None);
+                    } else if (command === "deco") {
+                        if (args.length <= 0) {
+                            throw new Error(`[ERR:Expansion:Decoration] Line: ${this.linecount}: 引数が指定されていません。`)
+                        }
+                        for (const deco of args) {
+                            switch (deco) {
+                                case "b":
+                                case "bold":
+                                    this.currentdeco.push(Decorations.Bold);
+                                    break;
+                                case "i":
+                                case "italic":
+                                    this.currentdeco.push(Decorations.Italic);
+                                    break;
+                                case "s":
+                                case "strike":
+                                    this.currentdeco.push(Decorations.Strike);
+                                    break;
+                                case "u":
+                                case "underline":
+                                    this.currentdeco.push(Decorations.Underline);
+                                    break;
+                                default:
+                                    throw new Error(`[ERR:Expansion:Decoration] Line ${this.linecount}: "${deco}" は不正な装飾タイプです。`);
+                            }
+                        }
+                        this.add_line();
+                    } else if (command === "enddeco") {
+                        this.currentdeco = [];
+                        this.add_line();
+                    } else if (command === "define") {
+                        if (args.length !== 2) {
+                            throw new Error(`[ERR:Expansion:Define] Line ${this.linecount}: define命令には2つの引数が必要ですが、${args.length}個指定されました。`)
+                        }
+                        this.defines[args[0]] = args[1];
+                        this.add_line();
+                    } else if (command === "ifdef") {
+                        if (args.length !== 1) {
+                            throw new Error(`[ERR:Expansion:Ifdef] Line ${this.linecount}: ifdef命令には1つの引数が必要ですが、${args.length}個指定されました。`)
+                        }
+                        if (!(args[0] in this.defines)) this.exprcheck++;
+                        this.add_line();
+                    } else if (command === "ifndef") {
+                        if (args.length !== 1) {
+                            throw new Error(`[ERR:Expansion:Ifndef] Line ${this.linecount}: ifndef命令には1つの引数が必要ですが、${args.length}個指定されました。`)
+                        }
+                        if (args[0] in this.defines) this.exprcheck++;
+                        this.add_line();
                     } else {
                         throw new Error(`[ERR:Expansion] Line ${this.linecount}: 不正な拡張命令です。`);
                     }
